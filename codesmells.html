@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detetive de Code Smells</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            overscroll-behavior: none; 
+        }
+        .card {
+            width: 100%;
+            aspect-ratio: 3 / 2;
+            perspective: 1000px;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        .card:active {
+            transform: scale(0.97);
+        }
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            border-radius: 0.5rem; 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); 
+        }
+
+        .card.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 0.5rem; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.4rem;
+            font-size: 0.7rem; 
+			line-height: 1.4;			
+            overflow-wrap: break-word;
+            word-break: break-word;
+        }
+        .card-front {
+            background-color: #60a5fa; 
+            color: white;
+        }
+        .card-back {
+            background-color: #fde047; 
+            color: #1f2937; 
+            transform: rotateY(180deg); 
+        }
+
+        .card.matched .card-inner {
+            transform: rotateY(180deg) !important; /* Força a rotação */
+            opacity: 1 !important; /* Remove a opacidade para simplificar */
+        }
+        .card.matched .card-front {
+            display: none !important; /* Força o desaparecimento da frente */
+        }
+        .card.matched .card-back {
+            background-color: #4ade80 !important; 
+            color: #1f2937 !important;
+            transform: rotateY(180deg) !important; /* Garante a orientação */
+            display: flex !important; /* Garante que está visível */
+            /* Outras propriedades para garantir visibilidade se necessário */
+            -webkit-backface-visibility: visible !important;
+            backface-visibility: visible !important;
+        }
+        
+        .no-click {
+            pointer-events: none;
+        }
+        
+        @media (min-width: 640px) { 
+            .card-front, .card-back {
+                font-size: 0.75rem; 
+                padding: 0.5rem;
+            }
+        }
+        @media (min-width: 768px) { 
+            .card-front, .card-back {
+                font-size: 0.875rem; 
+                padding: 0.6rem;
+            }
+        }
+         @media (min-width: 1024px) { 
+            .card-front, .card-back {
+                font-size: 0.875rem; 
+                padding: 0.75rem;
+            }
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.6);
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 0.5rem;
+            text-align: center;
+        }
+        .modal-button {
+            background-color: #3b82f6; 
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 flex flex-col items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-3xl mx-auto">
+        <header class="text-center mb-6">
+            <h1 class="text-3xl sm:text-4xl font-bold text-sky-600">Detetive de Code Smells 🕵️</h1>
+            <p class="text-sm sm:text-base text-slate-600 mt-2">Encontre os 8 pares de Code Smells e suas descrições!</p>
+        </header>
+
+        <div class="bg-white p-4 sm:p-6 rounded-xl shadow-xl mb-6">
+            <div class="flex flex-col sm:flex-row justify-around items-center text-center mb-4 space-y-2 sm:space-y-0">
+                <div>
+                    <span class="font-semibold">Pares Encontrados: </span>
+                    <span id="pairs-found" class="text-lg font-bold text-green-600">0</span>
+                </div>
+                <div>
+                    <span class="font-semibold">Tentativas: </span>
+                    <span id="attempts" class="text-lg font-bold text-red-600">0</span>
+                </div>
+            </div>
+            <div id="message-area" class="text-center text-blue-600 font-semibold h-6 mb-4"></div>
+        </div>
+        
+        <div id="game-board" class="grid grid-cols-4 gap-2 sm:gap-3 md:gap-4 mb-6">
+        </div>
+
+        <div class="text-center">
+            <button id="reset-button" class="bg-sky-500 hover:bg-sky-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-150 ease-in-out transform hover:scale-105">
+                Reiniciar Jogo
+            </button>
+        </div>
+    </div>
+    
+    <div id="game-over-modal" class="modal">
+        <div class="modal-content bg-white p-6 rounded-lg shadow-xl">
+            <h2 id="modal-title" class="text-2xl font-bold mb-4 text-sky-600">Parabéns!</h2>
+            <p id="modal-message" class="text-slate-700 mb-4">Você encontrou todos os pares!</p>
+            <p class="text-slate-700">Tentativas: <span id="modal-attempts" class="font-bold">0</span></p>
+            <button id="modal-close-button" class="modal-button bg-sky-500 hover:bg-sky-600">Jogar Novamente</button>
+        </div>
+    </div>
+
+    <script>
+        const gameBoard = document.getElementById('game-board');
+        const pairsFoundDisplay = document.getElementById('pairs-found');
+        const attemptsDisplay = document.getElementById('attempts');
+        const resetButton = document.getElementById('reset-button');
+        const messageArea = document.getElementById('message-area');
+
+        const gameOverModal = document.getElementById('game-over-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalMessage = document.getElementById('modal-message');
+        const modalAttempts = document.getElementById('modal-attempts');
+        const modalCloseButton = document.getElementById('modal-close-button');
+        
+        const allCodeSmells = [
+            { id: 'longMethod', name: 'Método Longo', description: 'Um método com muitas linhas e/ou responsabilidades.' },
+            { id: 'largeClass', name: 'Classe Grande', description: 'Uma classe com muitas responsabilidades, métodos e atributos.' },
+            { id: 'duplicateCode', name: 'Código Duplicado', description: 'Trechos de código idênticos ou muito similares em vários lugares.' },
+            { id: 'badNames', name: 'Nomes Ruins', description: 'Variáveis, métodos ou classes com nomes que não revelam seu propósito (ex: a, x, processar).' },
+            { id: 'featureEnvy', name: 'Feature Envy (Inveja)', description: 'Um método que parece mais interessado nos dados de outra classe do que na sua.' },
+            { id: 'dataClass', name: 'Data Class (Classe de Dados)', description: 'Uma classe que possui apenas campos e métodos para acessá-los (get/set), sem comportamento próprio.' },
+            { id: 'shotgunSurgery', name: 'Shotgun Surgery (Cirurgia)', description: 'Uma pequena mudança em uma parte do código requer diversas pequenas alterações em muitas classes.' },
+            { id: 'messageChains', name: 'Message Chains (Cadeias)', description: 'Longa sequência de chamadas de métodos aninhadas (ex: obj.getA().getB().fazerAlgo()).' },
+            { id: 'primitiveObsession', name: 'Obsessão por Primitivos', description: 'Uso excessivo de tipos primitivos (int, string) em vez de criar pequenas classes para conceitos.' },
+            { id: 'excessiveComments', name: 'Comentários em Excesso', description: 'Código que precisa de muitos comentários para ser entendido, indicando falta de clareza no código.' },
+            { id: 'longSwitch', name: 'Switch Statements Longos', description: 'Uso excessivo de `switch-case` ou `if-else if` que poderiam ser polimorfismo.' },
+            { id: 'middleMan', name: 'Middle Man (Intermediário)', description: 'Uma classe que delega a maior parte do seu trabalho para outra classe, servindo apenas como um canal.' },
+            { id: 'lazyClass', name: 'Lazy Class (Preguiçosa)', description: 'Uma classe que não faz o suficiente para justificar sua existência ou manutenção.' },
+            { id: 'temporaryField', name: 'Temporary Field (Campo Temp.)', description: 'Um atributo de instância que é usado apenas em situações específicas ou por um curto período.' },
+            { id: 'speculativeGenerality', name: 'Generalidade Especulativa', description: 'Código criado "por via das dúvidas" para funcionalidades futuras que nunca são implementadas.' },
+            { id: 'dataClumps', name: 'Data Clumps (Aglomerados)', description: 'Grupos de variáveis que frequentemente aparecem juntas em várias partes do código (ex: host, port, user, pass).' }
+        ];
+        const NUM_PAIRS_IN_GAME = 8; 
+
+        let currentGameSmells = []; 
+        let cards = []; 
+        let firstCard = null;
+        let secondCard = null;
+        let lockBoard = false;
+        let pairsFound = 0;
+        let attempts = 0;
+        let totalPairs = NUM_PAIRS_IN_GAME; 
+        
+        function selectRandomSmells() {
+            const shuffledFullList = [...allCodeSmells].sort(() => 0.5 - Math.random());
+            currentGameSmells = shuffledFullList.slice(0, NUM_PAIRS_IN_GAME);
+        }
+
+        function createCardElements() {
+            cards = []; 
+            currentGameSmells.forEach(smell => {
+                cards.push({ type: 'name', id: smell.id, content: smell.name, matched: false });
+                cards.push({ type: 'description', id: smell.id, content: smell.description, matched: false });
+            });
+            shufflePhysicalCards(); 
+        }
+
+        function shufflePhysicalCards() {
+            for (let i = cards.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [cards[i], cards[j]] = [cards[j], cards[i]];
+            }
+        }
+
+        function renderBoard() {
+            gameBoard.innerHTML = '';
+            cards.forEach((cardData, index) => {
+                const cardElement = document.createElement('div');
+                cardElement.classList.add('card');
+                cardElement.dataset.id = cardData.id;
+                cardElement.dataset.type = cardData.type;
+                cardElement.dataset.index = index; 
+
+                const cardInner = document.createElement('div');
+                cardInner.classList.add('card-inner');
+
+                const cardFront = document.createElement('div');
+                cardFront.classList.add('card-front');
+                const questionMark = document.createElement('span');
+                questionMark.textContent = '🤔';
+                questionMark.classList.add('text-3xl', 'sm:text-4xl');
+                cardFront.appendChild(questionMark);
+
+                const cardBack = document.createElement('div');
+                cardBack.classList.add('card-back');
+                cardBack.textContent = cardData.content;
+
+                cardInner.appendChild(cardFront);
+                cardInner.appendChild(cardBack);
+                cardElement.appendChild(cardInner);
+
+                if (cardData.matched) {
+                    cardElement.classList.add('matched', 'no-click', 'flipped');
+                }
+
+                cardElement.addEventListener('click', () => flipCard(cardElement));
+                gameBoard.appendChild(cardElement);
+            });
+        }
+
+        function flipCard(cardElement) {
+            if (lockBoard || cardElement.classList.contains('flipped') || cardElement.classList.contains('matched')) {
+                return;
+            }
+            cardElement.classList.add('flipped');
+
+            if (!firstCard) {
+                firstCard = cardElement;
+                return;
+            }
+
+            secondCard = cardElement;
+            lockBoard = true;
+            attempts++;
+            updateStats();
+            checkForMatch();
+        }
+
+        function checkForMatch() {
+            const firstCardId = firstCard.dataset.id;
+            const secondCardId = secondCard.dataset.id;
+            const isMatch = firstCardId === secondCardId && firstCard.dataset.index !== secondCard.dataset.index;
+
+            if (isMatch) {
+                messageArea.textContent = "Parabéns, você encontrou um par!";
+                processMatch();
+            } else {
+                messageArea.textContent = "Não foi desta vez. Tente novamente!";
+                unflipCards();
+            }
+        }
+
+        function processMatch() {
+            firstCard.classList.add('matched', 'no-click');
+            secondCard.classList.add('matched', 'no-click');
+            
+            const firstCardDataIndex = parseInt(firstCard.dataset.index);
+            const secondCardDataIndex = parseInt(secondCard.dataset.index);
+            if (cards[firstCardDataIndex]) cards[firstCardDataIndex].matched = true;
+            if (cards[secondCardDataIndex]) cards[secondCardDataIndex].matched = true;
+            
+            pairsFound++;
+            updateStats();
+
+            if (pairsFound === totalPairs) {
+                setTimeout(showGameOverModal, 700); 
+            }
+            resetTurn(); 
+        }
+
+        function unflipCards() {
+            setTimeout(() => {
+                if (firstCard && !firstCard.classList.contains('matched')) {
+                    firstCard.classList.remove('flipped');
+                }
+                if (secondCard && !secondCard.classList.contains('matched')) {
+                    secondCard.classList.remove('flipped');
+                }
+                resetTurn();
+                messageArea.textContent = ""; 
+            }, 1200);
+        }
+
+        function resetTurn() {
+            [firstCard, secondCard] = [null, null];
+            lockBoard = false;
+        }
+
+        function updateStats() {
+            pairsFoundDisplay.textContent = pairsFound;
+            attemptsDisplay.textContent = attempts;
+        }
+
+        function showGameOverModal() {
+            modalTitle.textContent = "🎉 Parabéns! 🎉";
+            modalMessage.textContent = `Você encontrou todos os ${totalPairs} pares de Code Smells!`;
+            modalAttempts.textContent = attempts;
+            gameOverModal.style.display = "flex";
+        }
+
+        function resetGame() {
+            pairsFound = 0;
+            attempts = 0;
+            lockBoard = false;
+            firstCard = null;
+            secondCard = null;
+            messageArea.textContent = "";
+            updateStats();
+
+            selectRandomSmells(); 
+            createCardElements(); 
+            renderBoard();        
+
+            gameOverModal.style.display = "none";
+        }
+        
+        resetButton.addEventListener('click', resetGame);
+        modalCloseButton.addEventListener('click', () => {
+            gameOverModal.style.display = "none";
+            resetGame();
+        });
+        window.onclick = function(event) {
+            if (event.target == gameOverModal) {
+                gameOverModal.style.display = "none";
+                resetGame();
+            }
+        }
+        
+        resetGame(); 
+    </script>
+</body>
+</html>
