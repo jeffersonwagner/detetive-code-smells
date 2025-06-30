@@ -254,10 +254,17 @@
 
                 const cardFront = document.createElement('div');
                 cardFront.classList.add('card-front');
-                const questionMark = document.createElement('span');
-                questionMark.textContent = '🤔';
-                questionMark.classList.add('text-3xl', 'sm:text-4xl');
-                cardFront.appendChild(questionMark);
+
+		const emojiSpan = document.createElement('span');
+
+		if (cardData.type === 'name') {
+                    emojiSpan.textContent = '🤔'; // Emoji para o NOME do Code Smell
+                } else {
+                    emojiSpan.textContent = '💡'; // Emoji para a DESCRIÇÃO do Code Smell
+                }
+		
+                emojiSpan.classList.add('text-3xl', 'sm:text-4xl');
+                cardFront.appendChild(emojiSpan);
 
                 const cardBack = document.createElement('div');
                 cardBack.classList.add('card-back');
