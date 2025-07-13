@@ -191,22 +191,30 @@
         const modalCloseButton = document.getElementById('modal-close-button');
         
         const allCodeSmells = [
-            { id: 'longMethod', name: 'Método Longo', description: 'Um método com muitas linhas e/ou responsabilidades.' },
-            { id: 'largeClass', name: 'Classe Grande', description: 'Uma classe com muitas responsabilidades, métodos e atributos.' },
-            { id: 'duplicateCode', name: 'Código Duplicado', description: 'Trechos de código idênticos ou muito similares em vários lugares.' },
-            { id: 'badNames', name: 'Nomes Ruins', description: 'Variáveis, métodos ou classes com nomes que não revelam seu propósito (ex: a, x, processar).' },
-            { id: 'featureEnvy', name: 'Feature Envy (Inveja)', description: 'Um método que parece mais interessado nos dados de outra classe do que na sua.' },
-            { id: 'dataClass', name: 'Data Class (Classe de Dados)', description: 'Uma classe que possui apenas campos e métodos para acessá-los (get/set), sem comportamento próprio.' },
-            { id: 'shotgunSurgery', name: 'Shotgun Surgery (Cirurgia)', description: 'Uma pequena mudança em uma parte do código requer diversas pequenas alterações em muitas classes.' },
-            { id: 'messageChains', name: 'Message Chains (Cadeias)', description: 'Longa sequência de chamadas de métodos aninhadas (ex: obj.getA().getB().fazerAlgo()).' },
-            { id: 'primitiveObsession', name: 'Obsessão por Primitivos', description: 'Uso excessivo de tipos primitivos (int, string) em vez de criar pequenas classes para conceitos.' },
-            { id: 'excessiveComments', name: 'Comentários em Excesso', description: 'Código que precisa de muitos comentários para ser entendido, indicando falta de clareza no código.' },
-            { id: 'longSwitch', name: 'Switch Statements Longos', description: 'Uso excessivo de `switch-case` ou `if-else if` que poderiam ser polimorfismo.' },
-            { id: 'middleMan', name: 'Middle Man (Intermediário)', description: 'Uma classe que delega a maior parte do seu trabalho para outra classe, servindo apenas como um canal.' },
-            { id: 'lazyClass', name: 'Lazy Class (Preguiçosa)', description: 'Uma classe que não faz o suficiente para justificar sua existência ou manutenção.' },
-            { id: 'temporaryField', name: 'Temporary Field (Campo Temp.)', description: 'Um atributo de instância que é usado apenas em situações específicas ou por um curto período.' },
-            { id: 'speculativeGenerality', name: 'Generalidade Especulativa', description: 'Código criado "por via das dúvidas" para funcionalidades futuras que nunca são implementadas.' },
-            { id: 'dataClumps', name: 'Data Clumps (Aglomerados)', description: 'Grupos de variáveis que frequentemente aparecem juntas em várias partes do código (ex: host, port, user, pass).' }
+            { id: 'longMethod', name: 'Long Method', description: 'Um método com muitas linhas e/ou responsabilidades.' },
+            { id: 'largeClass', name: 'Large Class', description: 'Uma classe com muitas responsabilidades, métodos e atributos.' },
+            { id: 'duplicateCode', name: 'Duplicate Code', description: 'Trechos de código idênticos ou muito similares em vários lugares.' },
+            { id: 'badNames', name: 'Bad Names', description: 'Variáveis, métodos ou classes com nomes que não revelam seu propósito (ex: a, x, processar).' },
+            { id: 'featureEnvy', name: 'Feature Envy', description: 'Um método que parece mais interessado nos dados de outra classe do que na sua.' },
+            { id: 'dataClass', name: 'Data Class', description: 'Uma classe que possui apenas campos e métodos para acessá-los (get/set), sem comportamento próprio.' },
+            { id: 'shotgunSurgery', name: 'Shotgun Surgery', description: 'Uma pequena mudança em uma parte do código requer diversas pequenas alterações em muitas classes.' },
+            { id: 'messageChains', name: 'Message Chains', description: 'Longa sequência de chamadas de métodos aninhadas (ex: obj.getA().getB().fazerAlgo()).' },
+            { id: 'primitiveObsession', name: 'Primitive Obsession', description: 'Uso excessivo de tipos primitivos (int, string) em vez de criar pequenas classes para conceitos.' },
+            { id: 'comments', name: 'Comments', description: 'Um método é preenchido com comentários explicativos.' },
+            { id: 'longSwitch', name: 'Switch Statements', description: 'Uso excessivo de `switch-case` ou `if-else if` que poderiam ser polimorfismo.' },
+            { id: 'middleMan', name: 'Middle Man', description: 'Uma classe que delega a maior parte do seu trabalho para outra classe, servindo apenas como um canal.' },
+            { id: 'lazyClass', name: 'Lazy Class', description: 'Uma classe que não faz o suficiente para justificar sua existência ou manutenção.' },
+            { id: 'temporaryField', name: 'Temporary Field', description: 'Um atributo de instância que é usado apenas em situações específicas ou por um curto período.' },
+            { id: 'speculativeGenerality', name: 'Speculative Generality', description: 'Código criado "por via das dúvidas" para funcionalidades futuras que nunca são implementadas.' },
+            { id: 'dataClumps', name: 'Data Clumps', description: 'Grupos de variáveis que frequentemente aparecem juntas em várias partes do código (ex: host, port, user, pass).' },
+	    { id: 'longParameterList', name: 'Long Parameter List', description: 'Mais de três ou quatro parâmetros para um método.' },
+	    { id: 'refusedBequest', name: 'Refused Bequest', description: 'Se uma subclasse usa apenas alguns dos métodos e propriedades herdados, a hierarquia fica desequilibrada.'},
+	    { id: 'alternativeClasswithDifferentInterfaces', name: 'Alternative Classes with Different Interfaces', description: 'Duas classes executam funções idênticas, mas têm nomes de métodos diferentes.'},
+	    { id: 'divergentChange', name: 'Divergent Change', description: 'Necessidade de alterar muitos métodos não relacionados ao fazer alterações em uma classe.'},
+	    { id: 'parallelInheritanceHierarchies', name: 'Parallel Inheritance Hierarchies', description: 'Sempre que você cria uma subclasse para uma classe, você precisa criar uma subclasse para outra classe.'},
+	    { id: 'deadCode', name: 'Dead Code', description: 'Uma variável, parâmetro, campo, método ou classe não é mais usado (geralmente porque está obsoleto).'},
+	    { id: 'inappropriateIntimacy', name: 'Inappropriate Intimacy', description: 'Uma classe usa os campos e métodos internos de outra classe.'},
+	    { id: 'incompleteLibraryClass', name: 'Incomplete Library Class', description: 'Bibliotecas que não atendem mais às necessidades dos usuários'}
         ];
         const NUM_PAIRS_IN_GAME = 8; 
 
