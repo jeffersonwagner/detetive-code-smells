@@ -138,20 +138,27 @@
 </head>
 <body class="bg-slate-100 text-slate-800 flex flex-col items-center justify-center min-h-screen p-4">
 
+
     <div class="w-full max-w-3xl mx-auto">
+        <div class="flex justify-end mb-2">
+            <select id="language-select" class="border border-slate-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400">
+                <option value="pt">Português</option>
+                <option value="en">English</option>
+            </select>
+        </div>
         <header class="text-center mb-6">
-            <h1 class="text-3xl sm:text-4xl font-bold text-sky-600">Detetive de Code Smells 🕵️</h1>
-            <p class="text-sm sm:text-base text-slate-600 mt-2">Encontre os 8 pares de Code Smells e suas descrições!</p>
+            <h1 id="main-title" class="text-3xl sm:text-4xl font-bold text-sky-600">Detetive de Code Smells 🕵️</h1>
+            <p id="main-subtitle" class="text-sm sm:text-base text-slate-600 mt-2">Encontre os 8 pares de Code Smells e suas descrições!</p>
         </header>
 
         <div class="bg-white p-4 sm:p-6 rounded-xl shadow-xl mb-6">
             <div class="flex flex-col sm:flex-row justify-around items-center text-center mb-4 space-y-2 sm:space-y-0">
                 <div>
-                    <span class="font-semibold">Pares Encontrados: </span>
+                    <span id="label-pairs-found" class="font-semibold">Pares Encontrados: </span>
                     <span id="pairs-found" class="text-lg font-bold text-green-600">0</span>
                 </div>
                 <div>
-                    <span class="font-semibold">Tentativas: </span>
+                    <span id="label-attempts" class="font-semibold">Tentativas: </span>
                     <span id="attempts" class="text-lg font-bold text-red-600">0</span>
                 </div>
             </div>
@@ -172,7 +179,7 @@
         <div class="modal-content bg-white p-6 rounded-lg shadow-xl">
             <h2 id="modal-title" class="text-2xl font-bold mb-4 text-sky-600">Parabéns!</h2>
             <p id="modal-message" class="text-slate-700 mb-4">Você encontrou todos os pares!</p>
-            <p class="text-slate-700">Tentativas: <span id="modal-attempts" class="font-bold">0</span></p>
+            <p class="text-slate-700"><span id="modal-label-attempts">Tentativas:</span> <span id="modal-attempts" class="font-bold">0</span></p>
             <button id="modal-close-button" class="modal-button bg-sky-500 hover:bg-sky-600">Jogar Novamente</button>
         </div>
     </div>
@@ -183,62 +190,126 @@
         const attemptsDisplay = document.getElementById('attempts');
         const resetButton = document.getElementById('reset-button');
         const messageArea = document.getElementById('message-area');
+        const languageSelect = document.getElementById('language-select');
+        const mainTitle = document.getElementById('main-title');
+        const mainSubtitle = document.getElementById('main-subtitle');
+        const labelPairsFound = document.getElementById('label-pairs-found');
+        const labelAttempts = document.getElementById('label-attempts');
+        const modalLabelAttempts = document.getElementById('modal-label-attempts');
 
         const gameOverModal = document.getElementById('game-over-modal');
         const modalTitle = document.getElementById('modal-title');
         const modalMessage = document.getElementById('modal-message');
         const modalAttempts = document.getElementById('modal-attempts');
         const modalCloseButton = document.getElementById('modal-close-button');
-        
-        const allCodeSmells = [
-            { id: 'longMethod', name: 'Long Method', description: 'Um método com muitas linhas e/ou responsabilidades.' },
-            { id: 'largeClass', name: 'Large Class', description: 'Uma classe com muitas responsabilidades, métodos e atributos.' },
-            { id: 'duplicateCode', name: 'Duplicate Code', description: 'Trechos de código idênticos ou muito similares em vários lugares.' },
-            { id: 'badNames', name: 'Bad Names', description: 'Variáveis, métodos ou classes com nomes que não revelam seu propósito (ex: a, x, processar).' },
-            { id: 'featureEnvy', name: 'Feature Envy', description: 'Um método que parece mais interessado nos dados de outra classe do que na sua.' },
-            { id: 'dataClass', name: 'Data Class', description: 'Uma classe que possui apenas campos e métodos para acessá-los (get/set), sem comportamento próprio.' },
-            { id: 'shotgunSurgery', name: 'Shotgun Surgery', description: 'Uma pequena mudança em uma parte do código requer diversas pequenas alterações em muitas classes.' },
-            { id: 'messageChains', name: 'Message Chains', description: 'Longa sequência de chamadas de métodos aninhadas (ex: obj.getA().getB().fazerAlgo()).' },
-            { id: 'primitiveObsession', name: 'Primitive Obsession', description: 'Uso excessivo de tipos primitivos (int, string) em vez de criar pequenas classes para conceitos.' },
-            { id: 'comments', name: 'Comments', description: 'Um método é preenchido com comentários explicativos.' },
-            { id: 'longSwitch', name: 'Switch Statements', description: 'Uso excessivo de `switch-case` ou `if-else if` que poderiam ser polimorfismo.' },
-            { id: 'middleMan', name: 'Middle Man', description: 'Uma classe que delega a maior parte do seu trabalho para outra classe, servindo apenas como um canal.' },
-            { id: 'lazyClass', name: 'Lazy Class', description: 'Uma classe que não faz o suficiente para justificar sua existência ou manutenção.' },
-            { id: 'temporaryField', name: 'Temporary Field', description: 'Um atributo de instância que é usado apenas em situações específicas ou por um curto período.' },
-            { id: 'speculativeGenerality', name: 'Speculative Generality', description: 'Código criado "por via das dúvidas" para funcionalidades futuras que nunca são implementadas.' },
-            { id: 'dataClumps', name: 'Data Clumps', description: 'Grupos de variáveis que frequentemente aparecem juntas em várias partes do código (ex: host, port, user, pass).' },
-	    { id: 'longParameterList', name: 'Long Parameter List', description: 'Mais de três ou quatro parâmetros para um método.' },
-	    { id: 'refusedBequest', name: 'Refused Bequest', description: 'Se uma subclasse usa apenas alguns dos métodos e propriedades herdados, a hierarquia fica desequilibrada.'},
-	    { id: 'alternativeClasswithDifferentInterfaces', name: 'Alternative Classes with Different Interfaces', description: 'Duas classes executam funções idênticas, mas têm nomes de métodos diferentes.'},
-	    { id: 'divergentChange', name: 'Divergent Change', description: 'Necessidade de alterar muitos métodos não relacionados ao fazer alterações em uma classe.'},
-	    { id: 'parallelInheritanceHierarchies', name: 'Parallel Inheritance Hierarchies', description: 'Sempre que você cria uma subclasse para uma classe, você precisa criar uma subclasse para outra classe.'},
-	    { id: 'deadCode', name: 'Dead Code', description: 'Uma variável, parâmetro, campo, método ou classe não é mais usado (geralmente porque está obsoleto).'},
-	    { id: 'inappropriateIntimacy', name: 'Inappropriate Intimacy', description: 'Uma classe usa os campos e métodos internos de outra classe.'},
-	    { id: 'incompleteLibraryClass', name: 'Incomplete Library Class', description: 'Bibliotecas que não atendem mais às necessidades dos usuários'}
-        ];
-        const NUM_PAIRS_IN_GAME = 8; 
 
-        let currentGameSmells = []; 
-        let cards = []; 
+        // Dicionário de textos para PT e EN
+        const TEXTS = {
+            pt: {
+                title: 'Detetive de Code Smells 🕵️',
+                subtitle: 'Encontre os 8 pares de Code Smells e suas descrições!',
+                pairsFound: 'Pares Encontrados: ',
+                attempts: 'Tentativas: ',
+                reset: 'Reiniciar Jogo',
+                foundPair: 'Parabéns, você encontrou um par!',
+                notMatch: 'Não foi desta vez. Tente novamente!',
+                modalTitle: '🎉 Parabéns! 🎉',
+                modalMessage: (total) => `Você encontrou todos os ${total} pares de Code Smells!`,
+                modalAttempts: 'Tentativas:',
+                modalButton: 'Jogar Novamente',
+                codeSmells: [
+                    { id: 'longMethod', name: 'Long Method', description: 'Um método com muitas linhas e/ou responsabilidades.' },
+                    { id: 'largeClass', name: 'Large Class', description: 'Uma classe com muitas responsabilidades, métodos e atributos.' },
+                    { id: 'duplicateCode', name: 'Duplicate Code', description: 'Trechos de código idênticos ou muito similares em vários lugares.' },
+                    { id: 'badNames', name: 'Bad Names', description: 'Variáveis, métodos ou classes com nomes que não revelam seu propósito (ex: a, x, processar).' },
+                    { id: 'featureEnvy', name: 'Feature Envy', description: 'Um método que parece mais interessado nos dados de outra classe do que na sua.' },
+                    { id: 'dataClass', name: 'Data Class', description: 'Uma classe que possui apenas campos e métodos para acessá-los (get/set), sem comportamento próprio.' },
+                    { id: 'shotgunSurgery', name: 'Shotgun Surgery', description: 'Uma pequena mudança em uma parte do código requer diversas pequenas alterações em muitas classes.' },
+                    { id: 'messageChains', name: 'Message Chains', description: 'Longa sequência de chamadas de métodos aninhadas (ex: obj.getA().getB().fazerAlgo()).' },
+                    { id: 'primitiveObsession', name: 'Primitive Obsession', description: 'Uso excessivo de tipos primitivos (int, string) em vez de criar pequenas classes para conceitos.' },
+                    { id: 'comments', name: 'Comments', description: 'Um método é preenchido com comentários explicativos.' },
+                    { id: 'longSwitch', name: 'Switch Statements', description: 'Uso excessivo de `switch-case` ou `if-else if` que poderiam ser polimorfismo.' },
+                    { id: 'middleMan', name: 'Middle Man', description: 'Uma classe que delega a maior parte do seu trabalho para outra classe, servindo apenas como um canal.' },
+                    { id: 'lazyClass', name: 'Lazy Class', description: 'Uma classe que não faz o suficiente para justificar sua existência ou manutenção.' },
+                    { id: 'temporaryField', name: 'Temporary Field', description: 'Um atributo de instância que é usado apenas em situações específicas ou por um curto período.' },
+                    { id: 'speculativeGenerality', name: 'Speculative Generality', description: 'Código criado "por via das dúvidas" para funcionalidades futuras que nunca são implementadas.' },
+                    { id: 'dataClumps', name: 'Data Clumps', description: 'Grupos de variáveis que frequentemente aparecem juntas em várias partes do código (ex: host, port, user, pass).' },
+                    { id: 'longParameterList', name: 'Long Parameter List', description: 'Mais de três ou quatro parâmetros para um método.' },
+                    { id: 'refusedBequest', name: 'Refused Bequest', description: 'Se uma subclasse usa apenas alguns dos métodos e propriedades herdados, a hierarquia fica desequilibrada.'},
+                    { id: 'alternativeClasswithDifferentInterfaces', name: 'Alternative Classes with Different Interfaces', description: 'Duas classes executam funções idênticas, mas têm nomes de métodos diferentes.'},
+                    { id: 'divergentChange', name: 'Divergent Change', description: 'Necessidade de alterar muitos métodos não relacionados ao fazer alterações em uma classe.'},
+                    { id: 'parallelInheritanceHierarchies', name: 'Parallel Inheritance Hierarchies', description: 'Sempre que você cria uma subclasse para uma classe, você precisa criar uma subclasse para outra classe.'},
+                    { id: 'deadCode', name: 'Dead Code', description: 'Uma variável, parâmetro, campo, método ou classe não é mais usado (geralmente porque está obsoleto).'},
+                    { id: 'inappropriateIntimacy', name: 'Inappropriate Intimacy', description: 'Uma classe usa os campos e métodos internos de outra classe.'},
+                    { id: 'incompleteLibraryClass', name: 'Incomplete Library Class', description: 'Bibliotecas que não atendem mais às necessidades dos usuários'}
+                ]
+            },
+            en: {
+                title: 'Code Smells Detective 🕵️',
+                subtitle: 'Find the 8 pairs of Code Smells and their descriptions!',
+                pairsFound: 'Pairs Found: ',
+                attempts: 'Attempts: ',
+                reset: 'Restart Game',
+                foundPair: 'Congratulations, you found a pair!',
+                notMatch: 'Not this time. Try again!',
+                modalTitle: '🎉 Congratulations! 🎉',
+                modalMessage: (total) => `You found all ${total} pairs of Code Smells!`,
+                modalAttempts: 'Attempts:',
+                modalButton: 'Play Again',
+                codeSmells: [
+                    { id: 'longMethod', name: 'Long Method', description: 'A method with too many lines and/or responsibilities.' },
+                    { id: 'largeClass', name: 'Large Class', description: 'A class with too many responsibilities, methods, and attributes.' },
+                    { id: 'duplicateCode', name: 'Duplicate Code', description: 'Identical or very similar code fragments in several places.' },
+                    { id: 'badNames', name: 'Bad Names', description: 'Variables, methods, or classes with names that do not reveal their purpose (e.g., a, x, process).' },
+                    { id: 'featureEnvy', name: 'Feature Envy', description: 'A method that seems more interested in the data of another class than its own.' },
+                    { id: 'dataClass', name: 'Data Class', description: 'A class that only has fields and methods to access them (get/set), with no own behavior.' },
+                    { id: 'shotgunSurgery', name: 'Shotgun Surgery', description: 'A small change in one part of the code requires many small changes in many classes.' },
+                    { id: 'messageChains', name: 'Message Chains', description: 'Long sequence of nested method calls (e.g., obj.getA().getB().doSomething()).' },
+                    { id: 'primitiveObsession', name: 'Primitive Obsession', description: 'Excessive use of primitive types (int, string) instead of creating small classes for concepts.' },
+                    { id: 'comments', name: 'Comments', description: 'A method is filled with explanatory comments.' },
+                    { id: 'longSwitch', name: 'Switch Statements', description: 'Excessive use of `switch-case` or `if-else if` that could be polymorphism.' },
+                    { id: 'middleMan', name: 'Middle Man', description: 'A class that delegates most of its work to another class, serving only as a channel.' },
+                    { id: 'lazyClass', name: 'Lazy Class', description: 'A class that does not do enough to justify its existence or maintenance.' },
+                    { id: 'temporaryField', name: 'Temporary Field', description: 'An instance attribute that is only used in specific situations or for a short period.' },
+                    { id: 'speculativeGenerality', name: 'Speculative Generality', description: 'Code created "just in case" for future features that are never implemented.' },
+                    { id: 'dataClumps', name: 'Data Clumps', description: 'Groups of variables that often appear together in various parts of the code (e.g., host, port, user, pass).' },
+                    { id: 'longParameterList', name: 'Long Parameter List', description: 'More than three or four parameters for a method.' },
+                    { id: 'refusedBequest', name: 'Refused Bequest', description: 'If a subclass only uses some of the inherited methods and properties, the hierarchy becomes unbalanced.'},
+                    { id: 'alternativeClasswithDifferentInterfaces', name: 'Alternative Classes with Different Interfaces', description: 'Two classes perform identical functions but have different method names.'},
+                    { id: 'divergentChange', name: 'Divergent Change', description: 'Need to change many unrelated methods when making changes to a class.'},
+                    { id: 'parallelInheritanceHierarchies', name: 'Parallel Inheritance Hierarchies', description: 'Whenever you create a subclass for one class, you need to create a subclass for another class.'},
+                    { id: 'deadCode', name: 'Dead Code', description: 'A variable, parameter, field, method, or class is no longer used (usually because it is obsolete).'},
+                    { id: 'inappropriateIntimacy', name: 'Inappropriate Intimacy', description: 'A class uses the internal fields and methods of another class.'},
+                    { id: 'incompleteLibraryClass', name: 'Incomplete Library Class', description: 'Libraries that no longer meet users\' needs'}
+                ]
+            }
+        };
+
+        let currentLang = 'pt';
+        let allCodeSmells = TEXTS[currentLang].codeSmells;
+        const NUM_PAIRS_IN_GAME = 8;
+
+        let currentGameSmells = [];
+        let cards = [];
         let firstCard = null;
         let secondCard = null;
         let lockBoard = false;
         let pairsFound = 0;
         let attempts = 0;
-        let totalPairs = NUM_PAIRS_IN_GAME; 
-        
+        let totalPairs = NUM_PAIRS_IN_GAME;
+
         function selectRandomSmells() {
             const shuffledFullList = [...allCodeSmells].sort(() => 0.5 - Math.random());
             currentGameSmells = shuffledFullList.slice(0, NUM_PAIRS_IN_GAME);
         }
 
         function createCardElements() {
-            cards = []; 
+            cards = [];
             currentGameSmells.forEach(smell => {
                 cards.push({ type: 'name', id: smell.id, content: smell.name, matched: false });
                 cards.push({ type: 'description', id: smell.id, content: smell.description, matched: false });
             });
-            shufflePhysicalCards(); 
+            shufflePhysicalCards();
         }
 
         function shufflePhysicalCards() {
@@ -255,7 +326,7 @@
                 cardElement.classList.add('card');
                 cardElement.dataset.id = cardData.id;
                 cardElement.dataset.type = cardData.type;
-                cardElement.dataset.index = index; 
+                cardElement.dataset.index = index;
 
                 const cardInner = document.createElement('div');
                 cardInner.classList.add('card-inner');
@@ -263,14 +334,14 @@
                 const cardFront = document.createElement('div');
                 cardFront.classList.add('card-front');
 
-		const emojiSpan = document.createElement('span');
+                const emojiSpan = document.createElement('span');
 
-		if (cardData.type === 'name') {
-                    emojiSpan.textContent = '🤔'; // Emoji para o NOME do Code Smell
+                if (cardData.type === 'name') {
+                    emojiSpan.textContent = '🤔';
                 } else {
-                    emojiSpan.textContent = '💡'; // Emoji para a DESCRIÇÃO do Code Smell
+                    emojiSpan.textContent = '💡';
                 }
-		
+
                 emojiSpan.classList.add('text-3xl', 'sm:text-4xl');
                 cardFront.appendChild(emojiSpan);
 
@@ -315,10 +386,10 @@
             const isMatch = firstCardId === secondCardId && firstCard.dataset.index !== secondCard.dataset.index;
 
             if (isMatch) {
-                messageArea.textContent = "Parabéns, você encontrou um par!";
+                messageArea.textContent = TEXTS[currentLang].foundPair;
                 processMatch();
             } else {
-                messageArea.textContent = "Não foi desta vez. Tente novamente!";
+                messageArea.textContent = TEXTS[currentLang].notMatch;
                 unflipCards();
             }
         }
@@ -326,19 +397,19 @@
         function processMatch() {
             firstCard.classList.add('matched', 'no-click');
             secondCard.classList.add('matched', 'no-click');
-            
+
             const firstCardDataIndex = parseInt(firstCard.dataset.index);
             const secondCardDataIndex = parseInt(secondCard.dataset.index);
             if (cards[firstCardDataIndex]) cards[firstCardDataIndex].matched = true;
             if (cards[secondCardDataIndex]) cards[secondCardDataIndex].matched = true;
-            
+
             pairsFound++;
             updateStats();
 
             if (pairsFound === totalPairs) {
-                setTimeout(showGameOverModal, 700); 
+                setTimeout(showGameOverModal, 700);
             }
-            resetTurn(); 
+            resetTurn();
         }
 
         function unflipCards() {
@@ -350,7 +421,7 @@
                     secondCard.classList.remove('flipped');
                 }
                 resetTurn();
-                messageArea.textContent = ""; 
+                messageArea.textContent = "";
             }, 2000);
         }
 
@@ -365,13 +436,14 @@
         }
 
         function showGameOverModal() {
-            modalTitle.textContent = "🎉 Parabéns! 🎉";
-            modalMessage.textContent = `Você encontrou todos os ${totalPairs} pares de Code Smells!`;
+            modalTitle.textContent = TEXTS[currentLang].modalTitle;
+            modalMessage.textContent = TEXTS[currentLang].modalMessage(totalPairs);
             modalAttempts.textContent = attempts;
             gameOverModal.style.display = "flex";
         }
 
         function resetGame() {
+            allCodeSmells = TEXTS[currentLang].codeSmells;
             pairsFound = 0;
             attempts = 0;
             lockBoard = false;
@@ -380,13 +452,24 @@
             messageArea.textContent = "";
             updateStats();
 
-            selectRandomSmells(); 
-            createCardElements(); 
-            renderBoard();        
+            selectRandomSmells();
+            createCardElements();
+            renderBoard();
 
             gameOverModal.style.display = "none";
+            updateStaticTexts();
         }
-        
+
+        function updateStaticTexts() {
+            mainTitle.textContent = TEXTS[currentLang].title;
+            mainSubtitle.textContent = TEXTS[currentLang].subtitle;
+            labelPairsFound.textContent = TEXTS[currentLang].pairsFound;
+            labelAttempts.textContent = TEXTS[currentLang].attempts;
+            resetButton.textContent = TEXTS[currentLang].reset;
+            modalLabelAttempts.textContent = TEXTS[currentLang].modalAttempts;
+            modalCloseButton.textContent = TEXTS[currentLang].modalButton;
+        }
+
         resetButton.addEventListener('click', resetGame);
         modalCloseButton.addEventListener('click', () => {
             gameOverModal.style.display = "none";
@@ -398,8 +481,14 @@
                 resetGame();
             }
         }
-        
-        resetGame(); 
+
+        languageSelect.addEventListener('change', (e) => {
+            currentLang = languageSelect.value;
+            resetGame();
+        });
+
+        // Inicialização
+        resetGame();
     </script>
 </body>
 </html>
